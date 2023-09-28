@@ -24,7 +24,7 @@ def copy(change_window_flag=True):
     with keyboard.pressed(Key.cmd if sys.platform == "darwin" else Key.ctrl):
         keyboard.press("c")
         keyboard.release("c")
-    time.sleep(0.1)
+    time.sleep(0.5)
 
 
 def paste():
@@ -84,7 +84,9 @@ class AIBubble:
         self.stop_generation = True
 
     def generate_text(self):
-        self.toggle_text_edit("", False, True, change_window_flag=False)
+        self.toggle_text_edit(
+            "", paste_result=False, stream=True, change_window_flag=False
+        )
 
     def toggle_text_edit(
         self, prefix_prompt="", paste_result=True, stream=False, change_window_flag=True
@@ -95,12 +97,14 @@ class AIBubble:
             selected_text = get_selected_text(change_window_flag=change_window_flag)
             result = ""
             if stream:
-                for response in get_openai_response(
+                gen = get_openai_response(
                     f"{prefix_prompt}{selected_text}", stream=True
-                ):
+                )
+                for response in gen:
                     delta = response.choices[0].delta
                     if not delta or self.stop_generation:
                         self.stop_generation = False
+                        gen.close()
                         break
                     for char in delta.content:
                         if char == "\n":
@@ -113,7 +117,7 @@ class AIBubble:
                         keyboard.press(char)
                         keyboard.release(char)
 
-                        time.sleep(0.1)
+                    time.sleep(0.1)
             else:
                 result = get_openai_response(f"{prefix_prompt}{selected_text}")
                 self.text_edit.setText(result)
