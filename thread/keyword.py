@@ -2,17 +2,20 @@ import threading
 from pynput import keyboard
 from PyQt6.QtCore import QThread, pyqtSignal
 import time
+import logging
 
 
 class AIKeyboardListenerThread(QThread):
     hotkey_signal = pyqtSignal()  # 定义一个信号，用于传递热键事件
     menukey_signal = pyqtSignal()  # 定义一个信号，用于传递热键事件
     exit_signal = pyqtSignal()  # 定义一个信号，用于传递热键事件
+    enter_signal = pyqtSignal()  # 定义一个信号，用于传递热键事件
 
-    def __init__(self):
+    def __init__(self, stop_flag):
         super(AIKeyboardListenerThread, self).__init__()
         self.current_keys = set()  # 用于追踪当前按下的键
         self.last_triggered_time = 0
+        self.stop_flag = stop_flag
 
     def run(self):
         with keyboard.Listener(
@@ -41,6 +44,9 @@ class AIKeyboardListenerThread(QThread):
             self.last_triggered_time = current_time
         if "Key.esc" in self.current_keys:
             self.exit_signal.emit()
+            self.stop_flag.set()
+        if "Key.enter" in self.current_keys:
+            self.enter_signal.emit()
 
     def on_release(self, key):
         try:

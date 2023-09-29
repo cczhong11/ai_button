@@ -1,10 +1,19 @@
-from PyQt6.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget
+import typing
+from PyQt6 import QtGui
+from PyQt6.QtWidgets import (
+    QApplication,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+    QLineEdit,
+)
 from PyQt6.QtCore import Qt, QRect
 import time
 from pynput.keyboard import Controller, Key
 
 from LLM.chatgpt import get_openai_response
-
+import threading
 import subprocess
 import sys
 
@@ -39,16 +48,21 @@ def get_selected_text(change_window_flag=True):
 
 
 class AIBubble:
-    def __init__(self):
+    def __init__(self, stop_flag):
         self.app = QApplication([])
         self.summary_button = self.create_button("总结", self.summary_text)
         self.prompt_button = self.create_button("AI", self.generate_text)
+        self.init_text_input()
         self.init_text_edit()
         self.init_layout()
         self.init_window()
         self.active = False
         self.keyboard = Controller()
-        self.stop_generation = False
+
+        self.stop_flag = stop_flag
+
+    def init_text_input(self):
+        self.text_input = QLineEdit()
 
     def init_text_edit(self):
         self.text_edit = QTextEdit()
@@ -57,6 +71,7 @@ class AIBubble:
 
     def init_layout(self):
         self.layout = QVBoxLayout()
+        self.layout.addWidget(self.text_input)
         self.layout.addWidget(self.summary_button)
         self.layout.addWidget(self.prompt_button)
         self.layout.addWidget(self.text_edit)
@@ -69,7 +84,18 @@ class AIBubble:
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         )
         self.window.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
         self.window.hide()
+
+    def enter_key_generate_text(self):
+        if self.text_input.text() == "":
+            return
+        gen = get_openai_response(self.text_input.text(), stream=True)
+        self.window.hide()
+        self.active = False
+        change_window()
+        self.run_stream(gen)
+        self.text_input.setText("")
 
     def create_button(self, text, func):
         button = QPushButton(text)
@@ -81,9 +107,10 @@ class AIBubble:
         return button
 
     def exit_generation(self):
-        self.stop_generation = True
+        pass
 
     def generate_text(self):
+        print("generate_text ...")
         self.toggle_text_edit(
             "", paste_result=False, stream=True, change_window_flag=False
         )
@@ -100,24 +127,7 @@ class AIBubble:
                 gen = get_openai_response(
                     f"{prefix_prompt}{selected_text}", stream=True
                 )
-                for response in gen:
-                    delta = response.choices[0].delta
-                    if not delta or self.stop_generation:
-                        self.stop_generation = False
-                        gen.close()
-                        break
-                    for char in delta.content:
-                        if char == "\n":
-                            keyboard.press(Key.enter)
-                            keyboard.release(Key.enter)
-                            continue
-                        if self.stop_generation:
-                            self.stop_generation = False
-                            break
-                        keyboard.press(char)
-                        keyboard.release(char)
-
-                    time.sleep(0.1)
+                self.run_stream(gen)
             else:
                 result = get_openai_response(f"{prefix_prompt}{selected_text}")
                 self.text_edit.setText(result)
@@ -131,6 +141,25 @@ class AIBubble:
         else:
             self.text_edit.hide()
         self.window.adjustSize()
+
+    def run_stream(self, gen):
+        for response in gen:
+            delta = response.choices[0].delta
+            if not delta or self.stop_flag.is_set():
+                self.stop_flag.clear()
+                gen.close()
+                break
+            for char in delta.content:
+                if char == "\n":
+                    keyboard.press(Key.enter)
+                    keyboard.release(Key.enter)
+                    continue
+                if self.stop_flag.is_set():
+                    self.stop_flag.clear()
+                    break
+                keyboard.press(char)
+                keyboard.release(char)
+            time.sleep(0.01)
 
     def summary_text(self):
         prefix_prompt = "你只会说中文，用100个汉字总结："

@@ -1,2 +1,5 @@
 electron_app
 __pycache__
+dist
+build
+.DS_Store
