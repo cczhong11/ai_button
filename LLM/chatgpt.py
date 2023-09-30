@@ -1,9 +1,9 @@
 import openai
 import os
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if openai.api_key is None:
-    raise Exception("OPENAI_API_KEY is not set. Set it as an environment variable.")
+
+def set_openai_key(key):
+    openai.api_key = key
 
 
 def get_openai_response(text, stream=False, max_tokens=1000):

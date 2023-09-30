@@ -18,10 +18,13 @@ from PyQt6.QtCore import Qt, QRect
 import time
 from pynput.keyboard import Controller, Key
 import os
-from LLM.chatgpt import get_openai_response
+from LLM.chatgpt import get_openai_response, set_openai_key
 import threading
 import subprocess
 import sys
+
+from config import AIConfig, write_config
+from thread.keyword import AIKeyboardListenerThread
 
 keyboard = Controller()
 
@@ -54,10 +57,11 @@ def get_selected_text(change_window_flag=True):
 
 
 class AIBubble:
-    def __init__(self, stop_flag):
+    def __init__(self, config: AIConfig):
         self.app = QApplication([])
         self.summary_button = self.create_button("总结", self.summary_text)
         self.prompt_button = self.create_button("AI", self.generate_text)
+        self.config = config
         self.init_text_input()
         self.init_text_edit()
         self.init_layout()
@@ -65,8 +69,8 @@ class AIBubble:
         self.init_menu()
         self.active = False
         self.keyboard = Controller()
-
-        self.stop_flag = stop_flag
+        self.keyboard_listener = None
+        self.stop_flag = threading.Event()
 
     def init_text_input(self):
         self.text_input = QLineEdit()
@@ -104,18 +108,24 @@ class AIBubble:
 
         self.menu_bar.addMenu(file_menu)
 
-        api_menu = QMenu("API")
-        set_api_action = QAction("Set OpenAI API Key", self.app)
+        api_menu = QMenu("设置")
+        set_api_action = QAction("设置openai秘钥", self.app)
+        set_key_board_action = QAction("设置热键", self.app)
         set_api_action.triggered.connect(self.show_api_key_dialog)
+        set_key_board_action.triggered.connect(self.set_key_board_dialog)
         api_menu.addAction(set_api_action)
+        api_menu.addAction(set_key_board_action)
 
         self.menu_bar.addMenu(api_menu)
 
         self.menu_bar.show()
+        self.init_api_dialog()
+        self.init_keyboard_dialog()
 
+    def init_api_dialog(self):
         api_key_input = QLineEdit()
         api_key_input.setMinimumWidth(200)
-        api_key_input.setText(os.getenv("OPENAI_API_KEY"))
+        api_key_input.setText(self.config.openai_api_key)
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.set_api_key)
 
@@ -130,20 +140,69 @@ class AIBubble:
         layout.addWidget(api_key_input)
         layout.addLayout(button_layout)
 
-        self.dialog = QDialog()
-        self.dialog.setWindowTitle("Set API to os.env")
-        self.dialog.setLayout(layout)
-        self.dialog.hide()
+        self.api_dialog = QDialog()
+        self.api_dialog.setWindowTitle("Set API")
+        self.api_dialog.setLayout(layout)
+        self.api_dialog.hide()
+
+    def init_keyboard_dialog(self):
+        keyboard_input = QLineEdit()
+        keyboard_input.setMinimumWidth(20)
+        keyboard_input.setObjectName("generation_key1")
+        keyboard_input.setText(self.config.generation_key1)
+        keyboard_input2 = QLineEdit()
+        keyboard_input2.setMinimumWidth(20)
+        keyboard_input2.setObjectName("generation_key2")
+        keyboard_input2.setText(self.config.generation_key2)
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.set_keyboard)
+
+        exit_button = QPushButton("Exit")
+        exit_button.clicked.connect(self.exit_dialog)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(exit_button)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("启动AI按键1:"))
+        layout.addWidget(keyboard_input)
+        layout.addWidget(QLabel("启动AI按键2:"))
+        layout.addWidget(keyboard_input2)
+        layout.addLayout(button_layout)
+
+        self.keyboard_dialog = QDialog()
+        self.keyboard_dialog.setWindowTitle("Set Keyboard")
+        self.keyboard_dialog.setLayout(layout)
+        self.keyboard_dialog.hide()
+
+    def set_key_board_dialog(self):
+        self.keyboard_dialog.show()
 
     def set_api_key(self):
-        os.environ["OPENAI_API_KEY"] = self.dialog.findChild(QLineEdit).text()
-        self.dialog.hide()
+        self.config.openai_api_key = self.api_dialog.findChild(QLineEdit).text()
+        write_config(self.config)
+        set_openai_key(self.config.openai_api_key)
+        self.api_dialog.hide()
+
+    def set_keyboard(self):
+        self.config.generation_key1 = self.keyboard_dialog.findChild(
+            QLineEdit, "generation_key1"
+        ).text()
+        self.config.generation_key2 = self.keyboard_dialog.findChild(
+            QLineEdit, "generation_key2"
+        ).text()
+        write_config(self.config)
+        self.start_keyboard_listener(self.config, self.keyboard_listener)
+        self.keyboard_dialog.hide()
 
     def exit_dialog(self):
-        self.dialog.hide()
+        if self.api_dialog.isVisible():
+            self.api_dialog.hide()
+        if self.keyboard_dialog.isVisible():
+            self.keyboard_dialog.hide()
 
     def show_api_key_dialog(self):
-        self.dialog.show()
+        self.api_dialog.show()
 
     def enter_key_generate_text(self):
         if self.text_input.text() == "":
@@ -241,3 +300,24 @@ class AIBubble:
         else:
             self.window.hide()
             self.active = False
+
+    def start_keyboard_listener(
+        self,
+        config: AIConfig,
+        thread: typing.Optional[AIKeyboardListenerThread],
+    ):
+        if thread:
+            thread.stop()
+            thread.quit()
+            thread.wait()
+
+        print("start_keyboard_listener ...")
+        new_thread = AIKeyboardListenerThread(self.stop_flag, config)
+        new_thread.hotkey_signal.connect(self.generate_text)
+        new_thread.menukey_signal.connect(self.toggle_window)
+        new_thread.exit_signal.connect(self.exit_generation)
+        new_thread.enter_signal.connect(self.enter_key_generate_text)
+        print("finish setting ...")
+        new_thread.start()
+
+        self.keyboard_listener = new_thread
