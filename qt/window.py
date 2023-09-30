@@ -7,11 +7,17 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QLineEdit,
+    QMenuBar,
+    QMenu,
+    QDialog,
+    QLabel,
+    QHBoxLayout,
 )
+from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, QRect
 import time
 from pynput.keyboard import Controller, Key
-
+import os
 from LLM.chatgpt import get_openai_response
 import threading
 import subprocess
@@ -56,6 +62,7 @@ class AIBubble:
         self.init_text_edit()
         self.init_layout()
         self.init_window()
+        self.init_menu()
         self.active = False
         self.keyboard = Controller()
 
@@ -86,6 +93,57 @@ class AIBubble:
         self.window.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.window.hide()
+
+    def init_menu(self):
+        self.menu_bar = QMenuBar()
+
+        file_menu = QMenu("File")
+        exit_action = QAction("Exit", self.app)
+        exit_action.triggered.connect(self.app.quit)
+        file_menu.addAction(exit_action)
+
+        self.menu_bar.addMenu(file_menu)
+
+        api_menu = QMenu("API")
+        set_api_action = QAction("Set OpenAI API Key", self.app)
+        set_api_action.triggered.connect(self.show_api_key_dialog)
+        api_menu.addAction(set_api_action)
+
+        self.menu_bar.addMenu(api_menu)
+
+        self.menu_bar.show()
+
+        api_key_input = QLineEdit()
+        api_key_input.setMinimumWidth(200)
+        api_key_input.setText(os.getenv("OPENAI_API_KEY"))
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.set_api_key)
+
+        exit_button = QPushButton("Exit")
+        exit_button.clicked.connect(self.exit_dialog)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(exit_button)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("OpenAI API Key:"))
+        layout.addWidget(api_key_input)
+        layout.addLayout(button_layout)
+
+        self.dialog = QDialog()
+        self.dialog.setWindowTitle("Set API to os.env")
+        self.dialog.setLayout(layout)
+        self.dialog.hide()
+
+    def set_api_key(self):
+        os.environ["OPENAI_API_KEY"] = self.dialog.findChild(QLineEdit).text()
+        self.dialog.hide()
+
+    def exit_dialog(self):
+        self.dialog.hide()
+
+    def show_api_key_dialog(self):
+        self.dialog.show()
 
     def enter_key_generate_text(self):
         if self.text_input.text() == "":
