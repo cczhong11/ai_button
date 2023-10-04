@@ -227,7 +227,6 @@ class AIBubble:
         pass
 
     def generate_text(self):
-        print("generate_text ...")
         self.toggle_text_edit(
             "", paste_result=False, stream=True, change_window_flag=False
         )
@@ -311,13 +310,12 @@ class AIBubble:
             thread.quit()
             thread.wait()
 
-        print("start_keyboard_listener ...")
         new_thread = AIKeyboardListenerThread(self.stop_flag, config)
         new_thread.hotkey_signal.connect(self.generate_text)
         new_thread.menukey_signal.connect(self.toggle_window)
         new_thread.exit_signal.connect(self.exit_generation)
         new_thread.enter_signal.connect(self.enter_key_generate_text)
-        print("finish setting ...")
+
         new_thread.start()
 
         self.keyboard_listener = new_thread
