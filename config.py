@@ -11,15 +11,22 @@ class AIConfig:
     generation_key1: str
     generation_key2: str
     openai_api_key: str
+    streaming: bool
 
 
 def read_config():
     if not os.path.exists(USER_HOME):
         os.mkdir(USER_HOME)
     if not os.path.exists(os.path.join(USER_HOME, "config.json")):
-        return AIConfig("Key.ctrl", "`", os.environ.get("OPENAI_API_KEY") or "")
+        return AIConfig("Key.ctrl", "`", os.environ.get("OPENAI_API_KEY") or "", True)
     with open(os.path.join(USER_HOME, "config.json"), "r", encoding="utf-8") as f:
         config = json.load(f)
+    for key in AIConfig.__dataclass_fields__.keys():
+        if key not in config:
+            if key == "streaming":
+                config[key] = True
+            else:
+                config[key] = ""
     return AIConfig(**config)
 
 

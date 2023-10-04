@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QLabel,
     QHBoxLayout,
+    QCheckBox,
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, QRect
@@ -109,7 +110,7 @@ class AIBubble:
         self.menu_bar.addMenu(file_menu)
 
         api_menu = QMenu("设置")
-        set_api_action = QAction("设置openai秘钥", self.app)
+        set_api_action = QAction("设置AI", self.app)
         set_key_board_action = QAction("设置热键", self.app)
         set_api_action.triggered.connect(self.show_api_key_dialog)
         set_key_board_action.triggered.connect(self.set_key_board_dialog)
@@ -126,18 +127,21 @@ class AIBubble:
         api_key_input = QLineEdit()
         api_key_input.setMinimumWidth(200)
         api_key_input.setText(self.config.openai_api_key)
-        save_button = QPushButton("Save")
+        streaming_checkbox = QCheckBox("流式输出")
+        streaming_checkbox.setChecked(self.config.streaming)
+        save_button = QPushButton("保存")
         save_button.clicked.connect(self.set_api_key)
 
-        exit_button = QPushButton("Exit")
+        exit_button = QPushButton("退出")
         exit_button.clicked.connect(self.exit_dialog)
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(save_button)
         button_layout.addWidget(exit_button)
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("OpenAI API Key:"))
+        layout.addWidget(QLabel("设置AI"))
         layout.addWidget(api_key_input)
+        layout.addWidget(streaming_checkbox)
         layout.addLayout(button_layout)
 
         self.api_dialog = QDialog()
@@ -154,10 +158,10 @@ class AIBubble:
         keyboard_input2.setMinimumWidth(20)
         keyboard_input2.setObjectName("generation_key2")
         keyboard_input2.setText(self.config.generation_key2)
-        save_button = QPushButton("Save")
+        save_button = QPushButton("保存")
         save_button.clicked.connect(self.set_keyboard)
 
-        exit_button = QPushButton("Exit")
+        exit_button = QPushButton("退出")
         exit_button.clicked.connect(self.exit_dialog)
 
         button_layout = QHBoxLayout()
@@ -180,6 +184,7 @@ class AIBubble:
 
     def set_api_key(self):
         self.config.openai_api_key = self.api_dialog.findChild(QLineEdit).text()
+        self.config.streaming = self.api_dialog.findChild(QCheckBox).isChecked()
         write_config(self.config)
         set_openai_key(self.config.openai_api_key)
         self.api_dialog.hide()
@@ -227,9 +232,14 @@ class AIBubble:
         pass
 
     def generate_text(self):
-        self.toggle_text_edit(
-            "", paste_result=False, stream=True, change_window_flag=False
-        )
+        if self.config.streaming:
+            self.toggle_text_edit(
+                "", paste_result=False, stream=True, change_window_flag=False
+            )
+        else:
+            self.toggle_text_edit(
+                "", paste_result=True, stream=False, change_window_flag=False
+            )
 
     def toggle_text_edit(
         self, prefix_prompt="", paste_result=True, stream=False, change_window_flag=True
@@ -246,6 +256,7 @@ class AIBubble:
                 self.run_stream(gen)
             else:
                 result = get_openai_response(f"{prefix_prompt}{selected_text}")
+            if not paste_result:
                 self.text_edit.setText(result)
                 self.text_edit.show()
             if paste_result:
