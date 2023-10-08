@@ -6,6 +6,7 @@ import time
 import logging
 
 from config import AIConfig
+from logger_util import logger
 
 
 class AIKeyboardListenerThread(QThread):
@@ -46,6 +47,7 @@ class AIKeyboardListenerThread(QThread):
             and self.config.generation_key2 in self.current_keys
         ):
             self.hotkey_signal.emit()  # 发送热键信号
+            logger.info(f"AI generation is triggered")
             self.last_triggered_time = current_time
         if (
             "Key.cmd" in self.current_keys or "Key.ctrl" in self.current_keys
