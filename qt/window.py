@@ -23,7 +23,7 @@ from LLM.chatgpt import get_openai_response, set_openai_key
 import threading
 import subprocess
 import sys
-
+from playsound import playsound
 from config import AIConfig, write_config
 from thread.keyword import AIKeyboardListenerThread
 
@@ -128,7 +128,11 @@ class AIBubble:
         api_key_input.setMinimumWidth(200)
         api_key_input.setText(self.config.openai_api_key)
         streaming_checkbox = QCheckBox("流式输出")
+        streaming_checkbox.setObjectName("streaming")
         streaming_checkbox.setChecked(self.config.streaming)
+        sound_checkbox = QCheckBox("播放音效")
+        sound_checkbox.setObjectName("sound")
+        sound_checkbox.setChecked(self.config.play_sound)
         save_button = QPushButton("保存")
         save_button.clicked.connect(self.set_api_key)
 
@@ -142,6 +146,7 @@ class AIBubble:
         layout.addWidget(QLabel("设置AI"))
         layout.addWidget(api_key_input)
         layout.addWidget(streaming_checkbox)
+        layout.addWidget(sound_checkbox)
         layout.addLayout(button_layout)
 
         self.api_dialog = QDialog()
@@ -184,7 +189,12 @@ class AIBubble:
 
     def set_api_key(self):
         self.config.openai_api_key = self.api_dialog.findChild(QLineEdit).text()
-        self.config.streaming = self.api_dialog.findChild(QCheckBox).isChecked()
+        self.config.streaming = self.api_dialog.findChild(
+            QCheckBox, "streaming"
+        ).isChecked()
+        self.config.play_sound = self.api_dialog.findChild(
+            QCheckBox, "sound"
+        ).isChecked()
         write_config(self.config)
         set_openai_key(self.config.openai_api_key)
         self.api_dialog.hide()
@@ -209,6 +219,14 @@ class AIBubble:
     def show_api_key_dialog(self):
         self.api_dialog.show()
 
+    def play_notification_sound(self):
+        if hasattr(sys, "_MEIPASS"):
+            # Running from PyInstaller bundle
+            asset_dir = os.path.join(sys._MEIPASS, "asset")
+        else:
+            asset_dir = "asset"
+        playsound(os.path.join(asset_dir, "start.wav"))
+
     def enter_key_generate_text(self):
         if self.text_input.text() == "":
             return
@@ -232,6 +250,7 @@ class AIBubble:
         pass
 
     def generate_text(self):
+        self.play_notification_sound()
         if self.config.streaming:
             self.toggle_text_edit(
                 "", paste_result=False, stream=True, change_window_flag=False
