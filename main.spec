@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='AI Button',
+    name='AI_Button',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,7 +37,7 @@ exe = EXE(
 )
 app = BUNDLE(
     exe,
-    name='AI Button.app',
+    name='AI_Button.app',
     icon='asset/ai.icns',
     bundle_identifier=None,
 )
