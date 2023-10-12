@@ -21,7 +21,9 @@ jobs:
           python-version: "3.10.11"
           architecture: ${{ matrix.architecture }}
       - name: Install Dependencies 📦
-        run: pip install -r requirements.txt
+        run: |
+          pip install --upgrade wheel
+          pip install -r requirements.txt
 
       - name: Install PyInstaller 🛠️
         run: pip install pyinstaller
