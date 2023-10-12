@@ -38,6 +38,6 @@ exe = EXE(
 app = BUNDLE(
     exe,
     name='AI Button.app',
-    icon='asset/ai.jpg',
+    icon='asset/ai.icns',
     bundle_identifier=None,
 )
