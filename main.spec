@@ -40,4 +40,16 @@ app = BUNDLE(
     name='AI_Button.app',
     icon='asset/ai.icns',
     bundle_identifier=None,
+    info_plist={
+            'NSPrincipalClass': 'NSApplication',
+            'NSAppleScriptEnabled': False,
+            'CFBundleDocumentTypes': [
+                {
+                    'CFBundleExecutable':'AI_Button'
+                    'CFBundleTypeIconFile': 'asset/ai.icns',
+                    'LSItemContentTypes': ['com.tczhong.ai_button'],
+                    'LSHandlerRank': 'Owner',
+                    }
+                ]
+    }
 )
