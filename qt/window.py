@@ -220,11 +220,14 @@ class AIBubble:
         self.api_dialog.show()
 
     def play_notification_sound(self):
+        if not self.config.play_sound:
+            return
         if hasattr(sys, "_MEIPASS"):
             # Running from PyInstaller bundle
             asset_dir = os.path.join(sys._MEIPASS, "asset")
         else:
             asset_dir = "asset"
+
         playsound(os.path.join(asset_dir, "start.wav"))
 
     def enter_key_generate_text(self):
