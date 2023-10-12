@@ -45,7 +45,7 @@ app = BUNDLE(
             'NSAppleScriptEnabled': False,
             'CFBundleDocumentTypes': [
                 {
-                    'CFBundleExecutable':'AI_Button'
+                    'CFBundleExecutable':'AI_Button',
                     'CFBundleTypeIconFile': 'asset/ai.icns',
                     'LSItemContentTypes': ['com.tczhong.ai_button'],
                     'LSHandlerRank': 'Owner',
