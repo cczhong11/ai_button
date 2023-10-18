@@ -55,6 +55,12 @@ def paste():
 
 def get_selected_text(change_window_flag=True):
     copy(change_window_flag)
+    logger.info("finish copy")
+    try:
+        output = subprocess.check_output(["pbpaste"]).decode("utf-8")
+        return output
+    except Exception as e:
+        print(f"Command failed with error: {e}")
     return subprocess.check_output(["pbpaste"]).decode("utf-8")
 
 
