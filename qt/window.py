@@ -26,6 +26,7 @@ import sys
 from playsound import playsound
 from config import AIConfig, write_config
 from thread.keyword import AIKeyboardListenerThread
+from logger_util import logger
 
 keyboard = Controller()
 
@@ -256,20 +257,35 @@ class AIBubble:
         self.play_notification_sound()
         if self.config.streaming:
             self.toggle_text_edit(
-                "", paste_result=False, stream=True, change_window_flag=False
+                "",
+                paste_result=False,
+                stream=True,
+                change_window_flag=False,
+                show_in_window=False,
             )
         else:
             self.toggle_text_edit(
-                "", paste_result=True, stream=False, change_window_flag=False
+                "",
+                paste_result=True,
+                stream=False,
+                change_window_flag=False,
+                show_in_window=False,
             )
 
     def toggle_text_edit(
-        self, prefix_prompt="", paste_result=True, stream=False, change_window_flag=True
+        self,
+        prefix_prompt="",
+        paste_result=True,
+        stream=False,
+        change_window_flag=True,
+        show_in_window=True,
     ):
         if not isinstance(prefix_prompt, str):
             prefix_prompt = ""
         if self.text_edit.isHidden():
+            logger.info("Generating text")
             selected_text = get_selected_text(change_window_flag=change_window_flag)
+            logger.info(f"Selected text: {selected_text}")
             result = ""
             if stream:
                 gen = get_openai_response(
@@ -278,7 +294,7 @@ class AIBubble:
                 self.run_stream(gen)
             else:
                 result = get_openai_response(f"{prefix_prompt}{selected_text}")
-            if not paste_result:
+            if not paste_result and show_in_window:
                 self.text_edit.setText(result)
                 self.text_edit.show()
             if paste_result:
@@ -290,6 +306,7 @@ class AIBubble:
         else:
             self.text_edit.hide()
         self.window.adjustSize()
+        logger.info("end toggle text edit")
 
     def run_stream(self, gen):
         for response in gen:
@@ -305,6 +322,7 @@ class AIBubble:
                     continue
                 if self.stop_flag.is_set():
                     self.stop_flag.clear()
+                    gen.close()
                     break
                 keyboard.press(char)
                 keyboard.release(char)

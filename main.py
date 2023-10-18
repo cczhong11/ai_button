@@ -14,11 +14,13 @@ def main():
         set_openai_key(config.openai_api_key)
     bubble = AIBubble(config)
     app = bubble.app
+    """
     mouse_listener = MouseListenerThread()
 
     mouse_listener.mouse_click_signal.connect(bubble.move_button)
     mouse_listener.start()
     time.sleep(1)  # Wait for the mouse listener to start
+    """
     bubble.start_keyboard_listener(config, None)
     time.sleep(1)
     sys.exit(app.exec())
