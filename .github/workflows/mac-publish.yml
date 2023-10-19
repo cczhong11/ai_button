@@ -35,11 +35,14 @@ jobs:
       - name: Set Executable Permissions 🛡️
         run: chmod +rx ./dist/${{ matrix.architecture }}/AI_Button.app/Contents/MacOS/AI_Button
 
-      - name: Zip the App 🗜️
-        run: zip -r ./dist/AI_Button-${{ matrix.architecture }}.zip ./dist/${{ matrix.architecture }}/AI_Button.app
+      - name: Install create-dmg 📦
+        run: npm install -g create-dmg
 
-      - name: Upload Artifacts 📤
+      - name: Create DMG 📀
+        run: create-dmg './dist/${{ matrix.architecture }}/AI_Button.app' './dist/${{ matrix.architecture }}' --overwrite
+
+      - name: Upload DMG Artifact 📤
         uses: actions/upload-artifact@v2
         with:
-          name: build-artifacts-${{ matrix.architecture }}.zip
-          path: ./dist/AI_Button-${{ matrix.architecture }}.zip
+          name: build-dmg-artifact-${{ matrix.architecture }}.dmg
+          path: ./dist/${{ matrix.architecture }}/AI_Button.dmg
