@@ -67,8 +67,8 @@ def get_selected_text(change_window_flag=True):
 class AIBubble:
     def __init__(self, config: AIConfig):
         self.app = QApplication([])
-        self.summary_button = self.create_button("总结", self.summary_text)
-        self.prompt_button = self.create_button("AI", self.generate_text)
+        # self.summary_button = self.create_button("总结", self.summary_text)
+        # self.prompt_button = self.create_button("AI", self.generate_text)
         self.config = config
         self.init_text_input()
         self.init_text_edit()
@@ -91,8 +91,8 @@ class AIBubble:
     def init_layout(self):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.text_input)
-        self.layout.addWidget(self.summary_button)
-        self.layout.addWidget(self.prompt_button)
+        # self.layout.addWidget(self.summary_button)
+        # self.layout.addWidget(self.prompt_button)
         self.layout.addWidget(self.text_edit)
 
     def init_window(self):
@@ -288,30 +288,27 @@ class AIBubble:
     ):
         if not isinstance(prefix_prompt, str):
             prefix_prompt = ""
-        if self.text_edit.isHidden():
-            logger.info("Generating text")
-            selected_text = get_selected_text(change_window_flag=change_window_flag)
-            logger.info(f"Selected text: {selected_text}")
-            result = ""
-            if stream:
-                gen = get_openai_response(
-                    f"{prefix_prompt}{selected_text}", stream=True
-                )
-                self.run_stream(gen)
-            else:
-                result = get_openai_response(f"{prefix_prompt}{selected_text}")
-            if not paste_result and show_in_window:
-                self.text_edit.setText(result)
-                self.text_edit.show()
-            if paste_result:
-                process = subprocess.Popen(
-                    "pbcopy", universal_newlines=True, stdin=subprocess.PIPE
-                )
-                process.communicate(input=result)
-                paste()
+
+        logger.info("Generating text")
+        selected_text = get_selected_text(change_window_flag=change_window_flag)
+        logger.info(f"Selected text: {selected_text}")
+        result = ""
+        if stream:
+            gen = get_openai_response(f"{prefix_prompt}{selected_text}", stream=True)
+            self.run_stream(gen)
         else:
-            self.text_edit.hide()
-        self.window.adjustSize()
+            result = get_openai_response(f"{prefix_prompt}{selected_text}")
+        if not paste_result and show_in_window:
+            self.text_edit.setText(result)
+            self.text_edit.show()
+        if paste_result:
+            process = subprocess.Popen(
+                "pbcopy", universal_newlines=True, stdin=subprocess.PIPE
+            )
+            process.communicate(input=result)
+            paste()
+
+        # self.window.adjustSize()
         logger.info("end toggle text edit")
 
     def run_stream(self, gen):
@@ -334,29 +331,6 @@ class AIBubble:
                 keyboard.release(char)
             time.sleep(0.01)
 
-    def summary_text(self):
-        prefix_prompt = "你只会说中文，用100个汉字总结："
-        self.toggle_text_edit(prefix_prompt, False)
-
-    def move_button(self, x, y):
-        rect = QRect(
-            self.window.x(), self.window.y(), self.window.width(), self.window.height()
-        )
-
-        if not rect.contains(x, y):
-            self.window.move(x + 20, y - 50)
-            if self.active:
-                self.window.show()
-
-    def toggle_window(self):
-        if self.window.isHidden():
-            self.active = True
-            self.window.show()
-            self.window.adjustSize()  # 调整窗口大小
-        else:
-            self.window.hide()
-            self.active = False
-
     def start_keyboard_listener(
         self,
         config: AIConfig,
@@ -369,9 +343,9 @@ class AIBubble:
 
         new_thread = AIKeyboardListenerThread(self.stop_flag, config)
         new_thread.hotkey_signal.connect(self.generate_text)
-        new_thread.menukey_signal.connect(self.toggle_window)
+        # new_thread.menukey_signal.connect(self.toggle_window)
         new_thread.exit_signal.connect(self.exit_generation)
-        new_thread.enter_signal.connect(self.enter_key_generate_text)
+        # new_thread.enter_signal.connect(self.enter_key_generate_text)
 
         new_thread.start()
 
