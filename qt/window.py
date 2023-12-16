@@ -263,6 +263,8 @@ class AIBubble:
 
     def run_stream(self, generator):
         for response in generator:
+            if not response.choices:
+                continue
             delta = response.choices[0].delta
             if delta.content is None:
                 continue
