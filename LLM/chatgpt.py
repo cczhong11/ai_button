@@ -1,13 +1,10 @@
-import openai
+from openai import OpenAI
 import os
 
 
-def set_openai_key(key):
-    openai.api_key = key
-
-
-def get_openai_response(text, stream=False, max_tokens=1000):
-    completion = openai.ChatCompletion.create(
+def get_openai_response(text, key, stream=False, max_tokens=1000):
+    client = OpenAI(api_key=key)
+    completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": text}],
         stream=stream,

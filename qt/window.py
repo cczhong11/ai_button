@@ -1,9 +1,9 @@
+import datetime
 import typing
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import (
     QApplication,
     QPushButton,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
     QLineEdit,
@@ -13,13 +13,14 @@ from PyQt6.QtWidgets import (
     QLabel,
     QHBoxLayout,
     QCheckBox,
+    QMessageBox,
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, QRect
 import time
 from pynput.keyboard import Controller, Key
 import os
-from LLM.chatgpt import get_openai_response, set_openai_key
+from LLM.chatgpt import get_openai_response
 import threading
 import subprocess
 import sys
@@ -27,6 +28,7 @@ from playsound import playsound
 from config import AIConfig, write_config
 from thread.keyword import AIKeyboardListenerThread
 from logger_util import logger
+
 
 keyboard = Controller()
 
@@ -53,7 +55,7 @@ def paste():
         keyboard.release("v")
 
 
-def get_selected_text(change_window_flag=True):
+def get_selected_text(change_window_flag=False):
     copy(change_window_flag)
     logger.info("finish copy")
     try:
@@ -67,44 +69,13 @@ def get_selected_text(change_window_flag=True):
 class AIBubble:
     def __init__(self, config: AIConfig):
         self.app = QApplication([])
-        # self.summary_button = self.create_button("总结", self.summary_text)
-        # self.prompt_button = self.create_button("AI", self.generate_text)
         self.config = config
-        self.init_text_input()
-        self.init_text_edit()
-        self.init_layout()
-        self.init_window()
         self.init_menu()
         self.active = False
         self.keyboard = Controller()
         self.keyboard_listener = None
         self.stop_flag = threading.Event()
-
-    def init_text_input(self):
-        self.text_input = QLineEdit()
-
-    def init_text_edit(self):
-        self.text_edit = QTextEdit()
-        self.text_edit.setReadOnly(True)
-        self.text_edit.hide()
-
-    def init_layout(self):
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.text_input)
-        # self.layout.addWidget(self.summary_button)
-        # self.layout.addWidget(self.prompt_button)
-        self.layout.addWidget(self.text_edit)
-
-    def init_window(self):
-        self.window = QWidget()
-        self.window.setLayout(self.layout)
-        self.window.hide()
-        self.window.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
-        )
-        self.window.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
-        self.window.hide()
+        self.begin_output = False
 
     def init_menu(self):
         self.menu_bar = QMenuBar()
@@ -203,7 +174,6 @@ class AIBubble:
             QCheckBox, "sound"
         ).isChecked()
         write_config(self.config)
-        set_openai_key(self.config.openai_api_key)
         self.api_dialog.hide()
 
     def set_keyboard(self):
@@ -216,6 +186,7 @@ class AIBubble:
         write_config(self.config)
         self.start_keyboard_listener(self.config, self.keyboard_listener)
         self.keyboard_dialog.hide()
+        logger.info("finish set keyboard")
 
     def exit_dialog(self):
         if self.api_dialog.isVisible():
@@ -237,25 +208,6 @@ class AIBubble:
 
         playsound(os.path.join(asset_dir, "start.wav"))
 
-    def enter_key_generate_text(self):
-        if self.text_input.text() == "":
-            return
-        gen = get_openai_response(self.text_input.text(), stream=True)
-        self.window.hide()
-        self.active = False
-        change_window()
-        self.run_stream(gen)
-        self.text_input.setText("")
-
-    def create_button(self, text, func):
-        button = QPushButton(text)
-        button.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
-        )
-        button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        button.clicked.connect(func)
-        return button
-
     def exit_generation(self):
         pass
 
@@ -266,16 +218,12 @@ class AIBubble:
                 "",
                 paste_result=False,
                 stream=True,
-                change_window_flag=False,
-                show_in_window=False,
             )
         else:
             self.toggle_text_edit(
                 "",
                 paste_result=True,
                 stream=False,
-                change_window_flag=False,
-                show_in_window=False,
             )
 
     def toggle_text_edit(
@@ -283,24 +231,26 @@ class AIBubble:
         prefix_prompt="",
         paste_result=True,
         stream=False,
-        change_window_flag=True,
-        show_in_window=True,
     ):
         if not isinstance(prefix_prompt, str):
             prefix_prompt = ""
-
+        logger.info(f"start toggle text edit in {datetime.datetime.now().isoformat()}")
         logger.info("Generating text")
-        selected_text = get_selected_text(change_window_flag=change_window_flag)
+        selected_text = get_selected_text()
         logger.info(f"Selected text: {selected_text}")
         result = ""
         if stream:
-            gen = get_openai_response(f"{prefix_prompt}{selected_text}", stream=True)
+            gen = get_openai_response(
+                f"{prefix_prompt}{selected_text}",
+                key=self.config.openai_api_key,
+                stream=True,
+            )
             self.run_stream(gen)
         else:
-            result = get_openai_response(f"{prefix_prompt}{selected_text}")
-        if not paste_result and show_in_window:
-            self.text_edit.setText(result)
-            self.text_edit.show()
+            result = get_openai_response(
+                f"{prefix_prompt}{selected_text}", key=self.config.openai_api_key
+            )
+
         if paste_result:
             process = subprocess.Popen(
                 "pbcopy", universal_newlines=True, stdin=subprocess.PIPE
@@ -309,14 +259,15 @@ class AIBubble:
             paste()
 
         # self.window.adjustSize()
-        logger.info("end toggle text edit")
+        logger.info(f"end toggle text edit in {datetime.datetime.now().isoformat()}")
 
-    def run_stream(self, gen):
-        for response in gen:
+    def run_stream(self, generator):
+        for response in generator:
             delta = response.choices[0].delta
-            if not delta or self.stop_flag.is_set():
+            if delta.content is None:
+                continue
+            if self.stop_flag.is_set():
                 self.stop_flag.clear()
-                gen.close()
                 break
             for char in delta.content:
                 if char == "\n":
@@ -325,7 +276,6 @@ class AIBubble:
                     continue
                 if self.stop_flag.is_set():
                     self.stop_flag.clear()
-                    gen.close()
                     break
                 keyboard.press(char)
                 keyboard.release(char)
@@ -336,17 +286,13 @@ class AIBubble:
         config: AIConfig,
         thread: typing.Optional[AIKeyboardListenerThread],
     ):
+        logger.info("start keyboard listener")
         if thread:
-            thread.stop()
-            thread.quit()
-            thread.wait()
-
+            return
         new_thread = AIKeyboardListenerThread(self.stop_flag, config)
         new_thread.hotkey_signal.connect(self.generate_text)
-        # new_thread.menukey_signal.connect(self.toggle_window)
-        new_thread.exit_signal.connect(self.exit_generation)
-        # new_thread.enter_signal.connect(self.enter_key_generate_text)
 
         new_thread.start()
-
+        logger.info("new keyboard listener started")
         self.keyboard_listener = new_thread
+        logger.info("finsih start keyboard listener")
