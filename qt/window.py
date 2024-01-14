@@ -28,6 +28,7 @@ from playsound import playsound
 from config import AIConfig, write_config
 from thread.keyword import AIKeyboardListenerThread
 from logger_util import logger
+from thread.mouse import MouseListenerThread
 
 
 keyboard = Controller()
@@ -75,7 +76,9 @@ class AIBubble:
         self.keyboard = Controller()
         self.keyboard_listener = None
         self.stop_flag = threading.Event()
-        self.begin_output = False
+        self.clicked_event = threading.Event()
+        self.current_generation = threading.Event()
+        self.mouse_listener = None
 
     def init_menu(self):
         self.menu_bar = QMenuBar()
@@ -111,6 +114,10 @@ class AIBubble:
         sound_checkbox = QCheckBox("播放音效")
         sound_checkbox.setObjectName("sound")
         sound_checkbox.setChecked(self.config.play_sound)
+        system_prompt_input = QLineEdit()
+        system_prompt_input.setMinimumWidth(200)
+        system_prompt_input.setText(self.config.system_prompt)
+        system_prompt_input.setObjectName("system_prompt")
         save_button = QPushButton("保存")
         save_button.clicked.connect(self.set_api_key)
 
@@ -125,6 +132,8 @@ class AIBubble:
         layout.addWidget(api_key_input)
         layout.addWidget(streaming_checkbox)
         layout.addWidget(sound_checkbox)
+        layout.addWidget(QLabel("系统提示"))
+        layout.addWidget(system_prompt_input)
         layout.addLayout(button_layout)
 
         self.api_dialog = QDialog()
@@ -173,6 +182,9 @@ class AIBubble:
         self.config.play_sound = self.api_dialog.findChild(
             QCheckBox, "sound"
         ).isChecked()
+        self.config.system_prompt = self.api_dialog.findChild(
+            QLineEdit, "system_prompt"
+        ).text()
         write_config(self.config)
         self.api_dialog.hide()
 
@@ -244,11 +256,14 @@ class AIBubble:
                 f"{prefix_prompt}{selected_text}",
                 key=self.config.openai_api_key,
                 stream=True,
+                prompt=self.config.system_prompt,
             )
             self.run_stream(gen)
         else:
             result = get_openai_response(
-                f"{prefix_prompt}{selected_text}", key=self.config.openai_api_key
+                f"{prefix_prompt}{selected_text}",
+                key=self.config.openai_api_key,
+                prompt=self.config.system_prompt,
             )
 
         if paste_result:
@@ -261,27 +276,37 @@ class AIBubble:
         # self.window.adjustSize()
         logger.info(f"end toggle text edit in {datetime.datetime.now().isoformat()}")
 
+    def check_gen(self, response):
+        if not response.choices:
+            return None
+        delta = response.choices[0].delta
+        return delta.content
+
+    def output_content(self, char):
+        if char == "\n":
+            keyboard.press(Key.enter)
+            keyboard.release(Key.enter)
+            return
+        keyboard.press(char)
+        keyboard.release(char)
+
     def run_stream(self, generator):
+        self.stop_flag.clear()
+        self.current_generation.clear()
         for response in generator:
-            if not response.choices:
+            content = self.check_gen(response)
+            if not content:
                 continue
-            delta = response.choices[0].delta
-            if delta.content is None:
-                continue
+            if not self.current_generation.is_set():
+                self.current_generation.set()
             if self.stop_flag.is_set():
-                self.stop_flag.clear()
                 break
-            for char in delta.content:
-                if char == "\n":
-                    keyboard.press(Key.enter)
-                    keyboard.release(Key.enter)
-                    continue
-                if self.stop_flag.is_set():
-                    self.stop_flag.clear()
-                    break
-                keyboard.press(char)
-                keyboard.release(char)
+            for char in content:
+                self.output_content(char)
             time.sleep(0.01)
+        self.current_generation.clear()
+        if self.stop_flag.is_set():
+            self.stop_flag.clear()
 
     def start_keyboard_listener(
         self,
@@ -291,10 +316,27 @@ class AIBubble:
         logger.info("start keyboard listener")
         if thread:
             return
-        new_thread = AIKeyboardListenerThread(self.stop_flag, config)
+        new_thread = AIKeyboardListenerThread(
+            self.stop_flag, self.current_generation, config
+        )
         new_thread.hotkey_signal.connect(self.generate_text)
 
         new_thread.start()
         logger.info("new keyboard listener started")
         self.keyboard_listener = new_thread
         logger.info("finsih start keyboard listener")
+
+    def start_mouse_listener(
+        self,
+        config: AIConfig,
+        thread: typing.Optional[MouseListenerThread],
+    ):
+        logger.info("start mouse listener")
+        if thread:
+            return
+        new_thread = MouseListenerThread(self.clicked_event)
+
+        new_thread.start()
+        logger.info("new mouse listener started")
+        self.mouse_listener = new_thread
+        logger.info("finsih mouse keyboard listener")

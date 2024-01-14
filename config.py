@@ -13,6 +13,7 @@ class AIConfig:
     openai_api_key: str
     streaming: bool
     play_sound: bool
+    system_prompt: str = ""
 
 
 def read_config():
