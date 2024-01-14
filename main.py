@@ -13,7 +13,9 @@ def main():
     bubble = AIBubble(config)
     app = bubble.app
 
-    bubble.start_keyboard_listener(config, None)
+    bubble.start_keyboard_listener(config)
+    time.sleep(0.1)
+    bubble.start_mouse_listener()
     time.sleep(1)
     sys.exit(app.exec())
 

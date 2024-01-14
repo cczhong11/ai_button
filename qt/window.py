@@ -196,7 +196,7 @@ class AIBubble:
             QLineEdit, "generation_key2"
         ).text()
         write_config(self.config)
-        self.start_keyboard_listener(self.config, self.keyboard_listener)
+
         self.keyboard_dialog.hide()
         logger.info("finish set keyboard")
 
@@ -290,9 +290,23 @@ class AIBubble:
         keyboard.press(char)
         keyboard.release(char)
 
-    def run_stream(self, generator):
+    def print_buffer(self):
+        while self.buffer and not self.clicked_event.is_set():
+            if self.stop_flag.is_set():
+                break
+            char = self.buffer.pop(0)
+            self.output_content(char)
+            time.sleep(0.01)
+
+    def clean_event(self):
         self.stop_flag.clear()
         self.current_generation.clear()
+        self.clicked_event.clear()
+        # to handle click event
+
+    def run_stream(self, generator):
+        self.clean_event()
+
         for response in generator:
             content = self.check_gen(response)
             if not content:
@@ -302,20 +316,24 @@ class AIBubble:
             if self.stop_flag.is_set():
                 break
             for char in content:
-                self.output_content(char)
+                # if click event is set, then append char to buffer
+                if self.clicked_event.is_set():
+                    self.buffer.append(char)
+                # if buffer is not empty, then print buffer
+                elif self.buffer:
+                    self.print_buffer()
+                    self.buffer.append(char)
+                # if buffer is empty, then print char
+                else:
+                    self.output_content(char)
             time.sleep(0.01)
-        self.current_generation.clear()
-        if self.stop_flag.is_set():
-            self.stop_flag.clear()
+        self.clean_event()
 
     def start_keyboard_listener(
         self,
         config: AIConfig,
-        thread: typing.Optional[AIKeyboardListenerThread],
     ):
         logger.info("start keyboard listener")
-        if thread:
-            return
         new_thread = AIKeyboardListenerThread(
             self.stop_flag, self.current_generation, config
         )
@@ -328,13 +346,10 @@ class AIBubble:
 
     def start_mouse_listener(
         self,
-        config: AIConfig,
-        thread: typing.Optional[MouseListenerThread],
     ):
         logger.info("start mouse listener")
-        if thread:
-            return
-        new_thread = MouseListenerThread(self.clicked_event)
+
+        new_thread = MouseListenerThread(self.clicked_event, self.current_generation)
 
         new_thread.start()
         logger.info("new mouse listener started")
