@@ -29,8 +29,9 @@ https://github.com/cczhong11/ai_bottom/assets/7358252/40bb014a-391e-44e9-81d0-d0
 ## Usage 📖
 
 1. **Select Text**: Highlight the text you want ChatGPT to interact with.
-2. **Trigger Shortcut**: Press `[Your-Defined-Shortcut]` to activate ChatGPT.
+2. **Trigger Shortcut**: Press `[Your-Defined-Shortcut]`(default is ctrl+`) to activate ChatGPT.
 3. **Enjoy the Magic**: Watch as ChatGPT transforms your selected text!
+4. press esc to stop generation
 
 ## Contributing 🤝
 
