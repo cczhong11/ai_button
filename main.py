@@ -2,7 +2,7 @@ import sys
 
 from config import read_config
 
-from qt.window import AIBubble
+from qt.window import AIBottom
 
 import time
 
@@ -10,7 +10,7 @@ import time
 def main():
     config = read_config()
 
-    bubble = AIBubble(config)
+    bubble = AIBottom(config)
     app = bubble.app
 
     bubble.start_keyboard_listener(config)

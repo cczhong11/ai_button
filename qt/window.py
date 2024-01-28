@@ -3,7 +3,7 @@ import typing
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import (
     QApplication,
-    QPushButton,
+    QPushBottom,
     QVBoxLayout,
     QWidget,
     QLineEdit,
@@ -67,7 +67,7 @@ def get_selected_text(change_window_flag=False):
     return subprocess.check_output(["pbpaste"]).decode("utf-8")
 
 
-class AIBubble:
+class AIBottom:
     def __init__(self, config: AIConfig):
         self.app = QApplication([])
         self.config = config
@@ -79,6 +79,7 @@ class AIBubble:
         self.clicked_event = threading.Event()
         self.current_generation = threading.Event()
         self.mouse_listener = None
+        self.buffer = []
 
     def init_menu(self):
         self.menu_bar = QMenuBar()
@@ -118,15 +119,15 @@ class AIBubble:
         system_prompt_input.setMinimumWidth(200)
         system_prompt_input.setText(self.config.system_prompt)
         system_prompt_input.setObjectName("system_prompt")
-        save_button = QPushButton("保存")
-        save_button.clicked.connect(self.set_api_key)
+        save_bottom = QPushBottom("保存")
+        save_bottom.clicked.connect(self.set_api_key)
 
-        exit_button = QPushButton("退出")
-        exit_button.clicked.connect(self.exit_dialog)
+        exit_bottom = QPushBottom("退出")
+        exit_bottom.clicked.connect(self.exit_dialog)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(save_button)
-        button_layout.addWidget(exit_button)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.addWidget(save_bottom)
+        bottom_layout.addWidget(exit_bottom)
         layout = QVBoxLayout()
         layout.addWidget(QLabel("设置AI"))
         layout.addWidget(api_key_input)
@@ -134,7 +135,7 @@ class AIBubble:
         layout.addWidget(sound_checkbox)
         layout.addWidget(QLabel("系统提示"))
         layout.addWidget(system_prompt_input)
-        layout.addLayout(button_layout)
+        layout.addLayout(bottom_layout)
 
         self.api_dialog = QDialog()
         self.api_dialog.setWindowTitle("Set API")
@@ -150,21 +151,21 @@ class AIBubble:
         keyboard_input2.setMinimumWidth(20)
         keyboard_input2.setObjectName("generation_key2")
         keyboard_input2.setText(self.config.generation_key2)
-        save_button = QPushButton("保存")
-        save_button.clicked.connect(self.set_keyboard)
+        save_bottom = QPushBottom("保存")
+        save_bottom.clicked.connect(self.set_keyboard)
 
-        exit_button = QPushButton("退出")
-        exit_button.clicked.connect(self.exit_dialog)
+        exit_bottom = QPushBottom("退出")
+        exit_bottom.clicked.connect(self.exit_dialog)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(save_button)
-        button_layout.addWidget(exit_button)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.addWidget(save_bottom)
+        bottom_layout.addWidget(exit_bottom)
         layout = QVBoxLayout()
         layout.addWidget(QLabel("启动AI按键1:"))
         layout.addWidget(keyboard_input)
         layout.addWidget(QLabel("启动AI按键2:"))
         layout.addWidget(keyboard_input2)
-        layout.addLayout(button_layout)
+        layout.addLayout(bottom_layout)
 
         self.keyboard_dialog = QDialog()
         self.keyboard_dialog.setWindowTitle("Set Keyboard")
@@ -302,7 +303,7 @@ class AIBubble:
         self.stop_flag.clear()
         self.current_generation.clear()
         self.clicked_event.clear()
-        # to handle click event
+        self.buffer = []
 
     def run_stream(self, generator):
         self.clean_event()
@@ -340,9 +341,7 @@ class AIBubble:
         new_thread.hotkey_signal.connect(self.generate_text)
 
         new_thread.start()
-        logger.info("new keyboard listener started")
         self.keyboard_listener = new_thread
-        logger.info("finsih start keyboard listener")
 
     def start_mouse_listener(
         self,
@@ -352,6 +351,4 @@ class AIBubble:
         new_thread = MouseListenerThread(self.clicked_event, self.current_generation)
 
         new_thread.start()
-        logger.info("new mouse listener started")
         self.mouse_listener = new_thread
-        logger.info("finsih mouse keyboard listener")

@@ -2,9 +2,9 @@ import logging
 import os
 
 # log to file
-USER_HOME = os.path.expanduser("~") + "/.ai_button"
+USER_HOME = os.path.expanduser("~") + "/.ai_bottom"
 logging.basicConfig(
-    filename=os.path.join(USER_HOME, "ai_button.log"),
+    filename=os.path.join(USER_HOME, "ai_bottom.log"),
     level=logging.DEBUG,
     format="%(asctime)s %(message)s",
     datefmt="%m/%d/%Y %I:%M:%S %p",

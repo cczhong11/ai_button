@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='AI_Button',
+    name='AI_Bottom',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,7 +37,7 @@ exe = EXE(
 )
 app = BUNDLE(
     exe,
-    name='AI_Button.app',
+    name='AI_Bottom.app',
     icon='asset/ai.icns',
     bundle_identifier=None,
     info_plist={
@@ -45,9 +45,9 @@ app = BUNDLE(
             'NSAppleScriptEnabled': False,
             'CFBundleDocumentTypes': [
                 {
-                    'CFBundleExecutable':'AI_Button',
+                    'CFBundleExecutable':'AI_Bottom',
                     'CFBundleTypeIconFile': 'asset/ai.icns',
-                    'LSItemContentTypes': ['com.tczhong.ai_button'],
+                    'LSItemContentTypes': ['com.tczhong.ai_bottom'],
                     'LSHandlerRank': 'Owner',
                     }
                 ]
