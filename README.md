@@ -11,7 +11,11 @@ AI Bottom is a nifty tool that lets you summon the power of ChatGPT in any text 
 
 ## Demo
 
-![](demo.mp4)
+
+
+https://github.com/cczhong11/ai_button/assets/7358252/254ad701-fae8-43fd-8069-51cf7da681fa
+
+
 
 ## Configuration
 
