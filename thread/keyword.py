@@ -10,11 +10,11 @@ from logger_util import logger
 
 
 class AIKeyboardListenerThread(QThread):
-    hotkey_signal = pyqtSignal()  # 定义一个信号，用于传递热键事件
+    hotkey_signal = pyqtSignal()
 
     def __init__(self, stop_flag, current_generation, config: AIConfig):
         super(AIKeyboardListenerThread, self).__init__()
-        self.current_keys = set()  # 用于追踪当前按下的键
+        self.current_keys = set()
         self.last_triggered_time = 0
         self.stop_flag = stop_flag
         self.current_generation = current_generation
@@ -44,7 +44,7 @@ class AIKeyboardListenerThread(QThread):
             self.config.generation_key1 in self.current_keys
             and self.config.generation_key2 in self.current_keys
         ):
-            self.hotkey_signal.emit()  # 发送热键信号
+            self.hotkey_signal.emit()
             logger.info(f"AI generation is triggered")
             self.last_triggered_time = current_time
 

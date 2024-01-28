@@ -17,7 +17,7 @@ class MouseListenerThread(QThread):
     def on_click(self, x, y, bottom, pressed):
         if not self.current_generation.is_set():
             return
-        if not pressed:  # 只在鼠标释放时发送信号
+        if not pressed:  # only emit when mouse is released
             if self.clicked_event.is_set():
                 self.clicked_event.clear()
                 logger.info(f"Mouse clicked and cleaned thread event")
