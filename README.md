@@ -16,6 +16,11 @@ AI Button is a nifty tool that lets you summon the power of ChatGPT in any text 
 https://github.com/cczhong11/ai_bottom/assets/7358252/40bb014a-391e-44e9-81d0-d04b594eae9d
 
 
+## Installation 📦
+
+1. Download the latest release from [here](https://github.com/cczhong11/ai_button/releases)
+2. Unzip the file and move the `ai_button.app` file to your `Applications` folder.
+
 ## Configuration
 
 1. set permission, add app to input monitoring
