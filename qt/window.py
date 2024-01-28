@@ -3,7 +3,7 @@ import typing
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import (
     QApplication,
-    QPushBottom,
+    QPushButton,
     QVBoxLayout,
     QWidget,
     QLineEdit,
@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QHBoxLayout,
     QCheckBox,
-    QMessageBox,
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, QRect
@@ -119,10 +118,10 @@ class AIBottom:
         system_prompt_input.setMinimumWidth(200)
         system_prompt_input.setText(self.config.system_prompt)
         system_prompt_input.setObjectName("system_prompt")
-        save_bottom = QPushBottom("Save")
+        save_bottom = QPushButton("Save")
         save_bottom.clicked.connect(self.set_api_key)
 
-        exit_bottom = QPushBottom("Exit")
+        exit_bottom = QPushButton("Exit")
         exit_bottom.clicked.connect(self.exit_dialog)
 
         bottom_layout = QHBoxLayout()
@@ -151,10 +150,10 @@ class AIBottom:
         keyboard_input2.setMinimumWidth(20)
         keyboard_input2.setObjectName("generation_key2")
         keyboard_input2.setText(self.config.generation_key2)
-        save_bottom = QPushBottom("Save")
+        save_bottom = QPushButton("Save")
         save_bottom.clicked.connect(self.set_keyboard)
 
-        exit_bottom = QPushBottom("Exit")
+        exit_bottom = QPushButton("Exit")
         exit_bottom.clicked.connect(self.exit_dialog)
 
         bottom_layout = QHBoxLayout()
