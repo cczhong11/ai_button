@@ -1,5 +1,7 @@
 # AI Button 🚀
 
+![Total visitor](https://badge.tczhong.com/total.svg?repo_id=cczhong11.ai_button)
+
 AI Button is a nifty tool that lets you summon the power of ChatGPT in any text field with just a simple keyboard shortcut. Whether you're drafting a Google Doc, composing an email, or jotting down notes, ChatGPT is just a keystroke away to assist you with writing, coding, or even brainstorming ideas. 🤖✨
 
 ## Features 🌟
