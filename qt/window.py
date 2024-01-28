@@ -66,7 +66,7 @@ def get_selected_text(change_window_flag=False):
     return subprocess.check_output(["pbpaste"]).decode("utf-8")
 
 
-class AIBottom:
+class AIButton:
     def __init__(self, config: AIConfig):
         self.app = QApplication([])
         self.config = config
@@ -118,15 +118,15 @@ class AIBottom:
         system_prompt_input.setMinimumWidth(200)
         system_prompt_input.setText(self.config.system_prompt)
         system_prompt_input.setObjectName("system_prompt")
-        save_bottom = QPushButton("Save")
-        save_bottom.clicked.connect(self.set_api_key)
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.set_api_key)
 
-        exit_bottom = QPushButton("Exit")
-        exit_bottom.clicked.connect(self.exit_dialog)
+        exit_button = QPushButton("Exit")
+        exit_button.clicked.connect(self.exit_dialog)
 
-        bottom_layout = QHBoxLayout()
-        bottom_layout.addWidget(save_bottom)
-        bottom_layout.addWidget(exit_bottom)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(exit_button)
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Set OpenAI API Key"))
         layout.addWidget(api_key_input)
@@ -134,7 +134,7 @@ class AIBottom:
         layout.addWidget(sound_checkbox)
         layout.addWidget(QLabel("System Prompt"))
         layout.addWidget(system_prompt_input)
-        layout.addLayout(bottom_layout)
+        layout.addLayout(button_layout)
 
         self.api_dialog = QDialog()
         self.api_dialog.setWindowTitle("Set API")
@@ -150,21 +150,21 @@ class AIBottom:
         keyboard_input2.setMinimumWidth(20)
         keyboard_input2.setObjectName("generation_key2")
         keyboard_input2.setText(self.config.generation_key2)
-        save_bottom = QPushButton("Save")
-        save_bottom.clicked.connect(self.set_keyboard)
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.set_keyboard)
 
-        exit_bottom = QPushButton("Exit")
-        exit_bottom.clicked.connect(self.exit_dialog)
+        exit_button = QPushButton("Exit")
+        exit_button.clicked.connect(self.exit_dialog)
 
-        bottom_layout = QHBoxLayout()
-        bottom_layout.addWidget(save_bottom)
-        bottom_layout.addWidget(exit_bottom)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(exit_button)
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Hotkey1:"))
         layout.addWidget(keyboard_input)
         layout.addWidget(QLabel("Hotkey2:"))
         layout.addWidget(keyboard_input2)
-        layout.addLayout(bottom_layout)
+        layout.addLayout(button_layout)
 
         self.keyboard_dialog = QDialog()
         self.keyboard_dialog.setWindowTitle("Set Keyboard")

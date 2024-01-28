@@ -14,7 +14,7 @@ class MouseListenerThread(QThread):
         with mouse.Listener(on_click=self.on_click) as listener:
             listener.join()
 
-    def on_click(self, x, y, bottom, pressed):
+    def on_click(self, x, y, button, pressed):
         if not self.current_generation.is_set():
             return
         if not pressed:  # only emit when mouse is released

@@ -1,6 +1,6 @@
-# AI Bottom 🚀
+# AI Button 🚀
 
-AI Bottom is a nifty tool that lets you summon the power of ChatGPT in any text field with just a simple keyboard shortcut. Whether you're drafting a Google Doc, composing an email, or jotting down notes, ChatGPT is just a keystroke away to assist you with writing, coding, or even brainstorming ideas. 🤖✨
+AI Button is a nifty tool that lets you summon the power of ChatGPT in any text field with just a simple keyboard shortcut. Whether you're drafting a Google Doc, composing an email, or jotting down notes, ChatGPT is just a keystroke away to assist you with writing, coding, or even brainstorming ideas. 🤖✨
 
 ## Features 🌟
 
@@ -18,11 +18,11 @@ https://github.com/cczhong11/ai_bottom/assets/7358252/40bb014a-391e-44e9-81d0-d0
 
 1. set permission, add app to input monitoring
 
-![](https://tczimg.s3.amazonaws.com/vscode/193a3507f3874b22930cb8217806dff3.png)
+![](https://tczimg.s3.amazonaws.com/vscode/578057803a4d47c7b20473ec92c52c29.png)
 
 2. add app to accessibility
 
-![](https://tczimg.s3.amazonaws.com/vscode/ab4afd88c988425397f4dd40aa476f98.png)
+![](https://tczimg.s3.amazonaws.com/vscode/2c37ba1883d84bffad4b37bf3b318c6c.png)
 
 ## Usage 📖
 

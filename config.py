@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-USER_HOME = os.path.expanduser("~") + "/.ai_bottom"
+USER_HOME = os.path.expanduser("~") + "/.ai_button"
 
 
 @dataclasses.dataclass

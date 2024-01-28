@@ -4,17 +4,17 @@ mkdir -p dist/dmg
 # Empty the dmg folder.
 rm -r dist/dmg/*
 # Copy the app bundle to the dmg folder.
-cp -r "dist/AI_Bottom.app" dist/dmg
+cp -r "dist/AI_Button.app" dist/dmg
 # If the DMG already exists, delete it.
-test -f "dist/AI_Bottom.dmg" && rm "dist/AI_Bottom.dmg"
+test -f "dist/AI_Button.dmg" && rm "dist/AI_Button.dmg"
 create-dmg \
-  --volname "AI_Bottom" \
+  --volname "AI_Button" \
   --volicon "asset/ai.icns" \
   --window-pos 200 120 \
   --window-size 600 300 \
   --icon-size 100 \
-  --icon "AI_Bottom.app" 175 120 \
-  --hide-extension "AI_Bottom.app" \
+  --icon "AI_Button.app" 175 120 \
+  --hide-extension "AI_Button.app" \
   --app-drop-link 425 120 \
-  "dist/AI_Bottom.dmg" \
+  "dist/AI_Button.dmg" \
   "dist/dmg/"
